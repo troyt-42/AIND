@@ -21,31 +21,17 @@ def grid_values(grid):
     return dict(zip(boxes, chars))
 
 def eliminate(values):
-    # Write a function that will take as an input, the sudoku in dictionary form,
-    # run through all the boxes, applying the eliminate technique,
-    # and return the resulting sudoku in dictionary form.
-    for key in values:
-        value = values[key]
-        if (len(value) == 1):
-            # Row elimination
-            for row in row_units:
-                if key in row:
-                    for row_unit in row:
-                        if (len(values[row_unit]) != 1):
-                            values[row_unit] = values[row_unit].replace(value, '');
-            # Column elimination
-            for col in column_units:
-                if key in col:
-                    for col_unit in col:
-                        if (len(values[col_unit]) != 1):
-                            values[col_unit] = values[col_unit].replace(value, '');
-            # 3 * 3 elimination
-            for square in square_units:
-                if key in square:
-                    for square_unit in square:
-                        if (len(values[square_unit]) != 1):
-                            values[square_unit] = values[square_unit].replace(value, '');
-    return values;
+    """
+    Go through all the boxes, and whenever there is a box with a value, eliminate this value from the values of all its peers.
+    Input: A sudoku in dictionary form.
+    Output: The resulting sudoku in dictionary form.
+    """
+    solved_values = [box for box in values.keys() if len(values[box]) == 1]
+    for box in solved_values:
+        digit = values[box]
+        for peer in peers[box]:
+            values[peer] = values[peer].replace(digit,'')
+    return values
 
 display(eliminate(grid_values('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..')));
 # display(grid_values('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..'));
