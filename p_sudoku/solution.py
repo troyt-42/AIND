@@ -79,7 +79,7 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            values[peer] = values[peer].replace(digit,'')
+            assign_value(values, peer, values[peer].replace(digit,''))
     return values
 
 def only_choice(values):
@@ -87,7 +87,7 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                values[dplaces[0]] = digit
+                assign_value(values, dplaces[0], digit)
     return values
 
 def reduce_puzzle(values):
@@ -125,7 +125,7 @@ def search(values):
     # Now use recurrence to solve each one of the resulting sudokus, and
     for value in values[s]:
         new_sudoku = values.copy()
-        new_sudoku[s] = value
+        assign_value(new_sudoku,s, value)
         attempt = search(new_sudoku)
         if attempt:
             return attempt
