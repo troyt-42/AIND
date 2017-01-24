@@ -73,24 +73,22 @@ def reduce_puzzle(values):
     return values
 
 def solve(values):
-    "Using depth-first search and propagation, create a search tree and solve the sudoku."
+    "Using depth-first search and propagation, try all possible values."
     # First, reduce the puzzle using the previous function
     values = reduce_puzzle(values)
+    if values is False:
+        return False ## Failed earlier
+    if all(len(values[s]) == 1 for s in boxes):
+        return values ## Solved!
     # Chose one of the unfilled square s with the fewest possibilities
-    if (values == False):
-        return False
-    lengthes = [(key,len(value)) for key, value in values.items() if len(value) > 1]
-    if (len(lengthes) > 0):
-        min_box = min(lengthes, key = lambda t: t[1])
-        # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
-        for value in values[min_box[0]]:
-            temp = values.copy()
-            temp[min_box[0]] = value
-            temp = solve(temp)
-            if ((temp != False) and (len([key for key, value in temp.items() if len(value) > 1]) == 0)):
-                return temp
-    # If you're stuck, see the solution.py tab!
-    return values;
+    n,s = min((len(values[s]), s) for s in boxes if len(values[s]) > 1)
+    # Now use recurrence to solve each one of the resulting sudokus, and
+    for value in values[s]:
+        new_sudoku = values.copy()
+        new_sudoku[s] = value
+        attempt = solve(new_sudoku)
+        if attempt:
+            return attempt
 # grid1 = '..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..';
 # values = grid_values('..3.2.6..9..3.5..1..18.64....81.29..7.......8..67.82....26.95..8..2.3..9..5.1.3..');
 # display(reduce_puzzle(values));
