@@ -1,3 +1,22 @@
+import re;
+
+rows = 'ABCDEFGHI'
+cols = '123456789'
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [s+t for s in A for t in B]
+
+boxes = cross(rows, cols)
+
+row_units = [cross(r, cols) for r in rows]
+column_units = [cross(rows, c) for c in cols]
+square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+diagonal_units = [[r+c for r, c in zip(rows, cols)], [r+c for r, c in zip(rows, cols[::-1])]]
+
+unitlist = row_units + column_units + square_units + diagonal_units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+
 assignments = []
 
 def assign_value(values, box, value):
@@ -22,20 +41,16 @@ def naked_twins(values):
 
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
-
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    return [s+t for s in a for t in b]
-
-boxes = cross(rows, cols)
-
-row_units = [cross(r, cols) for r in rows]
-column_units = [cross(rows, c) for c in cols]
-square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-unitlist = row_units + column_units + square_units
-units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
-peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
-
+    for unit in column_units+row_units:
+        for box in unit:
+            digits = values[box]
+            if (len(digits) > 1):
+                twins = [temp_box for temp_box in unit if values[temp_box] == digits]
+                if (len(twins) == len(digits)): # Find naked twins
+                    for b in unit:
+                        if (values[b] != digits):
+                            values[b] = re.sub('['+digits+']', '', values[b])
+    return values
 
 def grid_values(grid):
     "Convert grid into a dict of {square: char} with '.' for empties."
@@ -95,6 +110,10 @@ def reduce_puzzle(values):
     return values
 
 def solve(grid):
+    return search(grid_values(grid))
+
+
+def search(values):
     # First, reduce the puzzle using the previous function
     values = reduce_puzzle(values)
     if values is False:
@@ -107,17 +126,13 @@ def solve(grid):
     for value in values[s]:
         new_sudoku = values.copy()
         new_sudoku[s] = value
-        attempt = solve(new_sudoku)
+        attempt = search(new_sudoku)
         if attempt:
             return attempt
 
-# No need for 'search' to do the recursion, 'solve' can call itself
-# def search(values):
-#     pass
-
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    display(solve(grid_values(diag_sudoku_grid)))
+    display(solve(diag_sudoku_grid))
 
     try:
         from visualize import visualize_assignments
