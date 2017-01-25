@@ -44,7 +44,7 @@ def naked_twins(values):
 
     # I tried to apply naked_twins for all unit in unitlist instead of column_units+row_units
     # but got a result that failed the test. Why should not we apply naked_twins strategy to
-    # square unit?
+    # square unit
     for unit in column_units+row_units:
         for box in unit:
             digits = values[box]
@@ -74,6 +74,7 @@ def grid_values(grid):
 
 def display(values):
     "Display these values as a 2-D grid."
+    print(values);
     width = 1+max(len(values[s]) for s in boxes)
     line = '+'.join(['-'*(width*3)]*3)
     for r in rows:
@@ -118,7 +119,8 @@ def reduce_puzzle(values):
     return values
 
 def solve(grid):
-    return search(grid_values(grid))
+    result = search(grid_values(grid))
+    return result if result else grid_values(grid)
 
 
 def search(values):
@@ -135,11 +137,11 @@ def search(values):
         new_sudoku = values.copy()
         assign_value(new_sudoku,s, value)
         attempt = search(new_sudoku)
-        if attempt:
+        if (attempt and (all(len(values[s]) == 1 for s in boxes))):
             return attempt
-
+    return values
 if __name__ == '__main__':
-    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    diag_sudoku_grid = '...5..43.85..4...64.2.3..57...7...6...7.1.9...6...3...34..7.6.97...9..14.91..5...'
     display(solve(diag_sudoku_grid))
 
     try:

@@ -2,6 +2,7 @@ import sys, os, random, pygame
 sys.path.append(os.path.join("objects"))
 import SudokuSquare
 from GameResources import *
+import time
 
 digits = '123456789'
 rows = 'ABCDEFGHI'
@@ -53,7 +54,7 @@ def play(values_list):
         pygame.display.flip()
         pygame.display.update()
         clock.tick(5)
-
+    time.sleep(5500)    # pause 5.5 seconds
 
 if __name__ == "__main__":
     main()
