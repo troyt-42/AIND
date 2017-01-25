@@ -41,10 +41,18 @@ def naked_twins(values):
 
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
+
+    # I tried to apply naked_twins for all unit in unitlist instead of column_units+row_units
+    # but got a result that failed the test. Why should not we apply naked_twins strategy to
+    # square unit?
     for unit in column_units+row_units:
         for box in unit:
             digits = values[box]
             if (len(digits) > 1):
+                # One question: besides twins, how about triplets and more?
+                # Here I recoginize any array of same boxes that of same length as
+                # the value in the box. For example: ['23','23'] are twins, ['123'.'123','123']
+                # are triplets
                 twins = [temp_box for temp_box in unit if values[temp_box] == digits]
                 if (len(twins) == len(digits)): # Find naked twins
                     for b in unit:
