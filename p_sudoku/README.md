@@ -3,11 +3,18 @@
 
 # Question 1 (Naked Twins)
 Q: How do we use constraint propagation to solve the naked twins problem?
-A: We iterate through columns and rows of the grid and apply the naked-twins constraint for each unit.
+A: To propagate the constraint, it means we need to apply the naked twins strategy
+to all the units on the sudoku board that includes all the rows, columns, and squares
+for a standard sudoku, plus the diagonal units for a diagonal sudoku. Iterate through
+these units, search for naked twins, and eliminate related values is the process of
+constraint propagation.
 
 # Question 2 (Diagonal Sudoku)
 Q: How do we use constraint propagation to solve the diagonal sudoku problem?
-A: We simply add diagonal units to our units list so that during the propagation, diagonal units will also be considered.
+A: To ensure the strategies also apply to a diagonal sudoku, we need to add the
+diagonal units to the units list which is the place the program looks for related
+boxes to apply eliminations. In this way, the program add the diagonal rule into
+considerations.
 
 ### Install
 
