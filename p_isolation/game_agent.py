@@ -34,7 +34,6 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    # TODO: finish this function!
     raise NotImplementedError
 
 
@@ -163,8 +162,21 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        best_score = float("-inf") if maximizing_player else float("inf")
+        best_move = (-1, -1)
+        if depth > 0:
+            for legal_move in game.get_legal_moves():
+                # Generate the new board state with the legal_move applied
+                new_state = game.forecast_move(legal_move)
+                v, _ = self.minimax(new_state, depth - 1, not maximizing_player)
+                if ((maximizing_player and v > best_score) or
+                   ((not maximizing_player) and v < best_score)):
+                    best_score = v
+                    best_move = legal_move
+        elif depth == 0:
+            # reached leaf, return score value;
+            best_score = self.score(game, game.inactive_player if not maximizing_player else game.active_player)
+        return best_score, best_move
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
