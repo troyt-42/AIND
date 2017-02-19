@@ -33,7 +33,15 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    return float(len(game.get_legal_moves(player)) - len(game.get_legal_moves(game.get_opponent(player))))
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - opp_moves)
 
 
 class CustomPlayer:
@@ -67,14 +75,29 @@ class CustomPlayer:
     """
 
     def __init__(self, search_depth=3, score_fn=custom_score,
-                 iterative=True, method='minimax', timeout=10.):
+                 iterative=True, method='minimax', timeout=10., is_student=False):
         self.search_depth = search_depth
         self.iterative = iterative
         self.score = score_fn
         self.method = method
         self.time_left = None
         self.TIMER_THRESHOLD = timeout
-
+        self.num_moves = 0
+        self.is_student = is_student
+        self.reflection = {
+            (0, 6): (6, 0),
+            (1, 5): (5, 1),
+            (2, 4): (4, 2),
+            (0, 0): (6, 6),
+            (1, 1): (5, 5),
+            (2, 2): (4, 4),
+            (0, 3): (6, 3),
+            (1, 3): (5, 3),
+            (2, 3): (4, 3),
+            (3, 0): (3, 6),
+            (3, 1): (3, 5),
+            (3, 2): (3, 4)
+        }
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
         result before the time limit expires.
@@ -112,13 +135,22 @@ class CustomPlayer:
         """
 
         self.time_left = time_left
+        if self.time_left() < self.TIMER_THRESHOLD:
+            raise Timeout()
 
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
         best_score = float("-inf")
         best_move = (-1, -1)
-        if len(game.get_legal_moves()) == 0: return best_move
+        if len(legal_moves) == 0: return best_move
+        self.num_moves += 1
+        if (self.is_student and self.num_moves < 4):
+            # Always try to occupy the center position
+            if (game.move_is_legal((3,3))): return (3,3)
+            # Try to move the reflection position
+            opponent_p = game.get_player_location(game.inactive_player)
+            if game.move_is_legal(self.reflection[opponent_p]): return self.reflection[opponent_p]
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
@@ -175,6 +207,7 @@ class CustomPlayer:
 
         best_score = float("-inf") if maximizing_player else float("inf")
         best_move = (-1, -1)
+        visited_p = []
         if depth > 0:
             for legal_move in game.get_legal_moves():
                 # Generate the new board state with the legal_move applied
@@ -188,6 +221,51 @@ class CustomPlayer:
             # reached leaf, return score value;
             best_score = self.score(game, game.inactive_player if not maximizing_player else game.active_player)
         return best_score, best_move
+
+    def find_symmetry(self, game, current_move, visited_p):
+        blank_p = game.get_blank_spaces()
+
+        h_flip = [(move[0], 3 + (3 - move[1])) for move in blank_p]
+        if (h_flip == blank_p):
+            if (current_move[0], 3 + (3 - current_move[1])) in visited_p:
+                return True
+
+        v_flip = [(3 + (3 - move[0]), move[1]) for move in blank_p]
+        if (v_flip == blank_p):
+            if (3 + (3 - current_move[0]), current_move[1]) in visited_p:
+                return True
+
+        d_flip_1 = [(move[1], move[0]) for move in blank_p]
+        if (d_flip_1 == blank_p):
+            if (current_move[1], current_move[0]) in visited_p:
+                return True
+
+        d_flip_2 = [(6 - move[1], 6 - move[0]) for move in blank_p]
+        if (d_flip_2 == blank_p):
+            if (6 - current_move[1], 6 - current_move[0]) in visited_p:
+                return True
+
+        return False
+
+    def find_rotation(self, game, current_move, visited_p):
+        blank_p = game.get_blank_spaces()
+
+        rotate_90 = [(move[1], 6 - move[0]) for move in blank_p]
+        if (rotate_90 == blank_p):
+            if (current_move[1], 6 - current_move[0]) in visited_p:
+                return True
+
+        rotate_180 = [(move[1], move[0]) for move in blank_p]
+        if (rotate_180 == blank_p):
+            if (current_move[1], current_move[0]) in visited_p:
+                return True
+
+        rotate_270 = [(6 - move[1], move[0]) for move in blank_p]
+        if (rotate_180 == blank_p):
+            if (6 - current_move[1], current_move[0]) in visited_p:
+                return True
+
+        return False
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
@@ -226,8 +304,13 @@ class CustomPlayer:
 
         best_score = float("-inf") if maximizing_player else float("inf")
         best_move = (-1, -1)
+        visited_p = []
+
         if depth > 0:
             for legal_move in game.get_legal_moves():
+                if self.is_student and len(visited_p) > 0 and self.num_moves <= 3 and (self.find_symmetry(game, legal_move, visited_p)):
+                    visited_p.append(legal_move)
+                    continue
                 # Generate the new board state with the legal_move applied
                 new_state = game.forecast_move(legal_move)
                 v, _ = self.alphabeta(new_state, depth - 1, alpha, beta, not maximizing_player)
@@ -247,6 +330,8 @@ class CustomPlayer:
                         return best_score, best_move
                     if best_score < beta:
                         beta = best_score
+                if self.is_student and self.num_moves <= 3:
+                    visited_p.append(legal_move)
         elif depth == 0:
             # reached leaf, return score value;
             best_score = self.score(game, game.inactive_player if not maximizing_player else game.active_player)
