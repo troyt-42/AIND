@@ -213,5 +213,30 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        best_score = float("-inf") if maximizing_player else float("inf")
+        best_move = (-1, -1)
+        if depth > 0:
+            for legal_move in game.get_legal_moves():
+                # Generate the new board state with the legal_move applied
+                new_state = game.forecast_move(legal_move)
+                v, _ = self.alphabeta(new_state, depth - 1, alpha, beta, not maximizing_player)
+                if maximizing_player:
+                    if v > best_score:
+                        best_score = v
+                        best_move = legal_move
+                    if best_score >= beta:
+                        return best_score, best_move
+                    if best_score > alpha:
+                        alpha = best_score
+                elif not maximizing_player:
+                    if v < best_score:
+                        best_score = v
+                        best_move = legal_move
+                    if best_score <= alpha:
+                        return best_score, best_move
+                    if best_score < beta:
+                        beta = best_score
+        elif depth == 0:
+            # reached leaf, return score value;
+            best_score = self.score(game, game.inactive_player if not maximizing_player else game.active_player)
+        return best_score, best_move
