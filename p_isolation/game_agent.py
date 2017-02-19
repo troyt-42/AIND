@@ -33,8 +33,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-
-    raise NotImplementedError
+    return float(len(game.get_legal_moves(player)) - len(game.get_legal_moves(game.get_opponent(player))))
 
 
 class CustomPlayer:
@@ -114,25 +113,37 @@ class CustomPlayer:
 
         self.time_left = time_left
 
-        # TODO: finish this function!
-
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
-
+        best_score = float("-inf")
+        best_move = (-1, -1)
+        if len(game.get_legal_moves()) == 0: return best_move
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
-
+            if self.iterative:
+                d = 1
+                while True:
+                    if self.method == "minimax":
+                        v, _ = self.minimax(game, d)
+                    if self.method == "alphabeta":
+                        v, _ = self.alphabeta(game, d)
+                    if (v > best_score):
+                        best_score = v
+                        best_move = _
+                    d += 1
+            elif not self.iterative:
+                if self.method == "minimax":
+                    best_score, best_move = self.minimax(game, self.search_depth)
+                if self.method == "alphabeta":
+                    best_score, best_move = self.alphabeta(game, self.search_depth)
+            return best_move
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            pass
-
-        # Return the best move from the last completed search iteration
-        raise NotImplementedError
+            return best_move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
