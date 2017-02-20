@@ -7,12 +7,113 @@ You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
 import random
-
+import math
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
 
+def score_heuristic_1(game, player):
+    # This heuristic expand the legal moves to one level further
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = game.get_legal_moves(player)
+    own_moves_num = len(own_moves)
+    for move in own_moves:
+        own_moves_num += len(game.forecast_move(move).get_legal_moves(player))
+
+    opp = game.get_opponent(player)
+    opp_moves = game.get_legal_moves()
+    opp_moves_num = len(opp_moves)
+    for move in opp_moves:
+        opp_moves_num += len(game.forecast_move(move).get_legal_moves(opp))
+
+    return float(own_moves_num - opp_moves_num)
+
+def score_heuristic_2(game, player):
+    # This heuristic tries to stick to the center of the board while pushing
+    # the opponent away from the center
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    opp = game.get_opponent(player)
+
+    player_location = game.get_player_location(player)
+    opp_location = game.get_player_location(opp)
+
+    player_distance_to_center = math.sqrt(((player_location[0] - 3) ** 2 + (player_location[1] - 3) ** 2))
+    opp_distance_to_center = math.sqrt(((opp_location[0] - 3) ** 2 + (opp_location[1] - 3) ** 2))
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(opp))
+
+    return own_moves - player_distance_to_center - opp_moves + opp_distance_to_center
+
+def count_helper(blank_p, moves):
+    count = 0
+    for move in moves:
+        if move in blank_p:
+            count += 1
+            new_blank_p = [x for x in blank_p if x != move]
+            if move[0] - 2 >= 0 and move[1] + 1 <= 6:
+                count += count_helper(new_blank_p, (move[0] - 2, move[1] + 1))
+            if move[0] - 2 >= 0 and move[1] - 1 >= 0:
+                count += count_helper(new_blank_p, (move[0] - 2, move[1] - 1))
+            if move[0] + 2 <= 6 and move[1] + 1 <= 6:
+                count += count_helper(new_blank_p, (move[0] + 2, move[1] + 1))
+            if move[0] + 2 <= 6 and move[1] - 1 >= 0:
+                count += count_helper(new_blank_p, (move[0] + 2, move[1] - 1))
+
+            if move[0] - 1 >= 0 and move[1] + 2 <= 6:
+                count += count_helper(new_blank_p, (move[0] - 1, move[1] + 2))
+            if move[0] - 1 >= 0 and move[1] - 2 >= 0:
+                count += count_helper(new_blank_p, (move[0] - 1, move[1] - 2))
+            if move[0] + 1 <= 6 and move[1] + 2 <= 6:
+                count += count_helper(new_blank_p, (move[0] + 1, move[1] + 2))
+            if move[0] + 1 <= 6 and move[1] - 2 >= 0:
+                count += count_helper(new_blank_p, (move[0] + 1, move[1] - 2))
+    return count
+
+def score_heuristic_3(game, player):
+    # transposition_table = {
+    #     (3, 3): [(1,4), (2,5), (1,2), (2,1), (4,1), (5,2), (5,4), (4,5)],
+    #
+    #     (1, 4): [(0,6), (2,6), (0,2), (2,2), (3,5), (3,3)],
+    #     (2, 5): [(0,6), (0,4), (4,6), (4,4), (1,3), (3,3)],
+    #     (1, 2): [(0,0), (0,4), (2,4), (2,0), (3,1), (3,3)],
+    #     (2, 1): [(0,0), (0,2), (4,0), (4,2), (1,3), (3,3)],
+    #     (4, 1): [(6,0), (6,2), (2,0), (2,2), (5,3), (3,3)],
+    #     (5, 2): [(6,0), (4,0), (6,4), (4,4), (3,1), (3,3)],
+    #     (5, 4): [(6,6), (6,2), (4,6), (4,2), (3,5), (3,3)],
+    #     (4, 5): [(6,6), (6,4), (2,6), (2,4), (5,3), (3,3)],
+    #
+    #     (0, 6): [(1,4), (2,5)],
+    #     (0, 4): [(1,6), (1,4), (2,3), (2,5)],
+    #     (0, 2): [(1,4), (1,0), (2,1), (2,3)],
+    #     (0, 0): [(1,2), (2,2)],
+    #     (2, 0): [(1,2), (3,2), (4,1), (0,1)],
+    #     (4, 0): [(3,2), (5,2), (6,1), (2,1)],
+    #     (6, 0): [(4,1), (5,2)],
+    #     (6, 2): [(4,1), (4,3), (5,4), (5,0)],
+    #     (6, 4): [(4,3), (4,5), (5,6), (5,2)],
+    #     (6, 6): [(5,4), (4,5)],
+    #     (4, 6): [(6,5), (2,5), (5,4), (3,4)],
+    #     (2, 6): [(4,5), (0,5), (3,4), (1,4)],
+    #
+    # }
+    opp = game.get_opponent(player)
+
+    own_legal_moves = game.get_legal_moves(player)
+    opp_legal_moves = game.get_legal_moves(opp)
+    blank_p = game.get_blank_spaces()
+    return count_helper(blank_p, own_legal_moves) - count_helper(blank_p, opp_legal_moves)
 
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -33,15 +134,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    if game.is_loser(player):
-        return float("-inf")
-
-    if game.is_winner(player):
-        return float("inf")
-
-    own_moves = len(game.get_legal_moves(player))
-    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
+    return score_heuristic_2(game, player)
 
 
 class CustomPlayer:
@@ -84,20 +177,20 @@ class CustomPlayer:
         self.TIMER_THRESHOLD = timeout
         self.num_moves = 0
         self.is_student = is_student
-        self.reflection = {
-            (0, 6): (6, 0),
-            (1, 5): (5, 1),
-            (2, 4): (4, 2),
-            (0, 0): (6, 6),
-            (1, 1): (5, 5),
-            (2, 2): (4, 4),
-            (0, 3): (6, 3),
-            (1, 3): (5, 3),
-            (2, 3): (4, 3),
-            (3, 0): (3, 6),
-            (3, 1): (3, 5),
-            (3, 2): (3, 4)
-        }
+        # self.reflection = {
+        #     (0, 6): (6, 0),
+        #     (1, 5): (5, 1),
+        #     (2, 4): (4, 2),
+        #     (0, 0): (6, 6),
+        #     (1, 1): (5, 5),
+        #     (2, 2): (4, 4),
+        #     (0, 3): (6, 3),
+        #     (1, 3): (5, 3),
+        #     (2, 3): (4, 3),
+        #     (3, 0): (3, 6),
+        #     (3, 1): (3, 5),
+        #     (3, 2): (3, 4)
+        # }
     def get_move(self, game, legal_moves, time_left):
         """Search for the best move from the available legal moves and return a
         result before the time limit expires.
@@ -144,13 +237,17 @@ class CustomPlayer:
         best_score = float("-inf")
         best_move = (-1, -1)
         if len(legal_moves) == 0: return best_move
-        self.num_moves += 1
-        if (self.is_student and self.num_moves < 4):
+        if (self.is_student):
             # Always try to occupy the center position
-            if (game.move_is_legal((3,3))): return (3,3)
-            # Try to move the reflection position
-            opponent_p = game.get_player_location(game.inactive_player)
-            if game.move_is_legal(self.reflection[opponent_p]): return self.reflection[opponent_p]
+            if (3,3) in legal_moves: return (3,3)
+        # self.num_moves += 1
+        # if (self.is_student and self.num_moves < 4):
+        #     # Always try to occupy the center position
+        #     if (game.move_is_legal((3,3))): return (3,3)
+        #     # Try to move the reflection position
+        #     opponent_p = game.get_player_location(game.inactive_player)
+        #     if opponent_p in self.reflection.keys() and game.move_is_legal(self.reflection[opponent_p]): return self.reflection[opponent_p]
+
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
@@ -308,7 +405,7 @@ class CustomPlayer:
 
         if depth > 0:
             for legal_move in game.get_legal_moves():
-                if self.is_student and len(visited_p) > 0 and self.num_moves <= 3 and (self.find_symmetry(game, legal_move, visited_p)):
+                if self.is_student and len(visited_p) > 0 and depth > 1 and self.num_moves <= 3 and (self.find_symmetry(game, legal_move, visited_p)):
                     visited_p.append(legal_move)
                     continue
                 # Generate the new board state with the legal_move applied
