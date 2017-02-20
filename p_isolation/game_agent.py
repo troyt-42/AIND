@@ -56,29 +56,30 @@ def score_heuristic_2(game, player):
 
     return own_moves - player_distance_to_center - opp_moves + opp_distance_to_center
 
-def count_helper(blank_p, moves):
+def count_helper(blank_p, moves, depth):
     count = 0
-    for move in moves:
-        if move in blank_p:
-            count += 1
-            new_blank_p = [x for x in blank_p if x != move]
-            if move[0] - 2 >= 0 and move[1] + 1 <= 6:
-                count += count_helper(new_blank_p, (move[0] - 2, move[1] + 1))
-            if move[0] - 2 >= 0 and move[1] - 1 >= 0:
-                count += count_helper(new_blank_p, (move[0] - 2, move[1] - 1))
-            if move[0] + 2 <= 6 and move[1] + 1 <= 6:
-                count += count_helper(new_blank_p, (move[0] + 2, move[1] + 1))
-            if move[0] + 2 <= 6 and move[1] - 1 >= 0:
-                count += count_helper(new_blank_p, (move[0] + 2, move[1] - 1))
+    if depth > 0:
+        for move in moves:
+            if move in blank_p:
+                count += 1
+                new_blank_p = [x for x in blank_p if x != move]
+                if move[0] - 2 >= 0 and move[1] + 1 <= 6:
+                    count += count_helper(new_blank_p, (move[0] - 2, move[1] + 1), depth - 1)
+                if move[0] - 2 >= 0 and move[1] - 1 >= 0:
+                    count += count_helper(new_blank_p, (move[0] - 2, move[1] - 1), depth - 1)
+                if move[0] + 2 <= 6 and move[1] + 1 <= 6:
+                    count += count_helper(new_blank_p, (move[0] + 2, move[1] + 1), depth - 1)
+                if move[0] + 2 <= 6 and move[1] - 1 >= 0:
+                    count += count_helper(new_blank_p, (move[0] + 2, move[1] - 1), depth - 1)
 
-            if move[0] - 1 >= 0 and move[1] + 2 <= 6:
-                count += count_helper(new_blank_p, (move[0] - 1, move[1] + 2))
-            if move[0] - 1 >= 0 and move[1] - 2 >= 0:
-                count += count_helper(new_blank_p, (move[0] - 1, move[1] - 2))
-            if move[0] + 1 <= 6 and move[1] + 2 <= 6:
-                count += count_helper(new_blank_p, (move[0] + 1, move[1] + 2))
-            if move[0] + 1 <= 6 and move[1] - 2 >= 0:
-                count += count_helper(new_blank_p, (move[0] + 1, move[1] - 2))
+                if move[0] - 1 >= 0 and move[1] + 2 <= 6:
+                    count += count_helper(new_blank_p, (move[0] - 1, move[1] + 2), depth - 1)
+                if move[0] - 1 >= 0 and move[1] - 2 >= 0:
+                    count += count_helper(new_blank_p, (move[0] - 1, move[1] - 2), depth - 1)
+                if move[0] + 1 <= 6 and move[1] + 2 <= 6:
+                    count += count_helper(new_blank_p, (move[0] + 1, move[1] + 2), depth - 1)
+                if move[0] + 1 <= 6 and move[1] - 2 >= 0:
+                    count += count_helper(new_blank_p, (move[0] + 1, move[1] - 2), depth - 1)
     return count
 
 def score_heuristic_3(game, player):
@@ -113,7 +114,7 @@ def score_heuristic_3(game, player):
     own_legal_moves = game.get_legal_moves(player)
     opp_legal_moves = game.get_legal_moves(opp)
     blank_p = game.get_blank_spaces()
-    return count_helper(blank_p, own_legal_moves) - count_helper(blank_p, opp_legal_moves)
+    return count_helper(blank_p, own_legal_moves, 3) - count_helper(blank_p, opp_legal_moves, 3)
 
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -134,7 +135,7 @@ def custom_score(game, player):
     float
         The heuristic value of the current game state to the specified player.
     """
-    return score_heuristic_2(game, player)
+    return score_heuristic_3(game, player)
 
 
 class CustomPlayer:
