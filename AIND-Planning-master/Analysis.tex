@@ -1,0 +1,145 @@
+\documentclass{article}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage[margin=0.5in]{geometry}
+\title{Project Analysis}
+\author{Zeyu Tao}
+\date{Mar 19, 2017}
+\renewcommand{\arraystretch}{1.5}
+\begin{document}
+   \maketitle
+   \textbf{Data (first part):}\\
+  \begin{center}
+    \begin{tabular}{ | l | p{6cm} | p{6cm} | }
+      \hline
+       & \textbf{breadth\_first\_search} & \textbf{depth\_first\_graph\_search} \\ \hline
+      \textbf{air\_cargo\_p1}
+      &
+      \parbox[t]{6cm}{40 (Node Expansion)\\56 (Goal Test)\\0.12264959400636144s \\}
+      \parbox[t]{6cm}{
+      Output:\\
+        Load(C1, P1, SFO)\\
+        Load(C2, P2, JFK)\\
+        Fly(P2, JFK, SFO)\\
+        Unload(C2, P2, SFO)\\
+        Fly(P1, SFO, JFK)\\
+        Unload(C1, P1, JFK)\\
+        (which is optimal)\\
+        }
+      &
+      \parbox[t]{6cm}{21 (Node Expansion)\\22 (Goal Test)\\0.05040333599026780s \\}
+      Output is of length 20 (which is not optimal)
+      \\ \hline
+      \textbf{air\_cargo\_p2}
+      &
+      \parbox[t]{6cm}{3343 (Node Expansion)\\4609 (Goal Test)\\46.63726615400083s \\}
+    \parbox[t]{6cm}{
+    Output:\\
+      Load(C1, P1, SFO)\\
+      Load(C2, P2, JFK)\\
+      Load(C3, P3, ATL)\\
+      Fly(P2, JFK, SFO)\\
+      Unload(C2, P2, SFO)\\
+      Fly(P1, SFO, JFK)\\
+      Unload(C1, P1, JFK)\\
+      Fly(P3, ATL, SFO)\\
+      Unload(C3, P3, SFO)\\
+      (which is optimal)\\
+      }
+      &
+      \parbox[t]{6cm}{624 (Node Expansion)\\625 (Goal Test)\\9.691954628004169s \\}
+      Output is of length 619 (which is not optimal)
+       \\ \hline
+      \textbf{air\_cargo\_p3}
+      &
+      \parbox[t]{6cm}{7320 (Node Expansion)\\11132 (Goal Test)\\136.91961661000096s \\}
+      \parbox[t]{6cm}{
+      Output:\\
+        Load(C1, P1, SFO)\\
+        Fly(P2, JFK, ATL)\\
+        Load(C3, P2, ATL)\\
+        Fly(P1, SFO, JFK)\\
+        Unload(C1, P1, JFK)\\
+        Fly(P2, ATL, ORD)\\
+        Load(C4, P2, ORD)\\
+        Fly(P2, ORD, SFO)\\
+        Unload(C3, P2, SFO)\\
+        Unload(C4, P2, SFO)\\
+        (which is optimal)\\
+        }
+      &
+      \parbox[t]{6cm}{273 (Node Expansion)\\274 (Goal Test)\\4.027164797000296s \\}
+      Output is of length 261 (which is not optimal)
+      \\
+      \hline
+    \end{tabular}
+
+
+  \end{center}
+
+  \textbf{Data (second part):}\\
+ \begin{center}
+   \begin{tabular}{ | l | p{5cm} | p{5cm} | p{5cm} | }
+     \hline
+      &
+      \textbf{astar\_search h\_1}
+      &
+      \textbf{astar\_search h\_ignore\_preconditions}
+      &
+      \textbf{astar\_search h\_pg\_levelsum} \\ \hline
+     \textbf{air\_cargo\_p1}
+     &
+     \parbox[t]{5cm}{55 (Node Expansion)\\57 (Goal Test)\\0.1421329010045156s \\}
+     Output is of length 6 (which is optimal)
+
+     &
+     \parbox[t]{5cm}{41 (Node Expansion)\\43 (Goal Test)\\0.11284507800883148s \\}
+     Output is of length 6 (which is optimal)
+     &
+     \parbox[t]{5cm}{11 (Node Expansion)\\13 (Goal Test)\\1.8732714319921797s \\}
+     Output is of length 6 (which is optimal)
+     \\ \hline
+     \textbf{air\_cargo\_p2}
+     &
+     \parbox[t]{5cm}{4852 (Node Expansion)\\4854 (Goal Test)\\98.73611211500247s \\}
+     Output is of length 9 (which is optimal)
+     &
+     \parbox[t]{5cm}{1506 (Node Expansion)\\1508 (Goal Test)\\29.049476678002975s \\}
+     Output is of length 9 (which is optimal)
+     &
+     \parbox[t]{5cm}{86 (Node Expansion)\\88 (Goal Test)\\183.26364141399972s \\}
+     Output is of length 9 (which is optimal)
+      \\ \hline
+     \textbf{air\_cargo\_p3}
+     &
+     \parbox[t]{5cm}{4852 (Node Expansion)\\4854 (Goal Test)\\103.87692542899458s \\}
+     Output is of length 10 (which is optimal)
+     &
+     \parbox[t]{5cm}{2036 (Node Expansion)\\2038 (Goal Test)\\45.70321316999616s \\}
+     Output is of length 10 (which is optimal)
+     &
+     \parbox[t]{5cm}{189 (Node Expansion)\\191 (Goal Test)\\568.3686694179924s \\}
+     Output is of length 10 (which is optimal)
+     \\
+     \hline
+   \end{tabular}
+   \end{center}
+
+   \textbf{Analysis:}
+   From the two tables above, we can have these observations:
+   \begin{itemize}
+    \item Breath-first-search is optimal.
+    \item Depth-first-graph-search is much faster than breath-first-search: it visited less nodes and conducted less goal tests. However, depth-first-graph-search is not optimal.
+    \item \(A^*\) algorithm is better than the previous two kind of search: it is optimal and fast (less node expansion & goal tests) at the same time.
+    \item Among the \(A^*\) heuristics, \textbf{h\_1} had largest node expansion and goal test number. \textbf{h\_ignore\_preconditions} is better than \textbf{h\_1} but \textbf{h\_pg\_levelsum} had the minimum number of node expansion and goal tests.
+    \item Among the \(A^*\) heuristics, \textbf{h\_pg\_levelsum} had the lowest speed.  \textbf{h\_pg\_levelsum} is better than \textbf{h\_1} but \textbf{h\_ignore\preconditions} had the fastest performance.
+  \end{itemize}
+
+  From these observations, it is clear that using \textbf{h\_ignore\_preconditions} will give better overall performance. \textbf{h\_1} is not very "focused" on our direction and had a lot unnecessary node expansions.
+  \textbf{h\_pg\_levelsum} managed to decrease node expansion and goal test further compared to \textbf{h\_ignore\_preconditions}. But since it took too much time to solve same question,
+  I think \textbf{h\_ignore\_preconditions} is the best heuristics. One possible reason that why \textbf{h\_pg\_levelsum} is very slow is that it took long time to generate the planning graph, especially in my implementation.
+  So I think after improvements, \textbf{h\_pg\_levelsum} may over-perform \textbf{h\_ignore\_preconditions}. Besides, here we don't have an expensive goal test function, if we do, then \textbf{h\_pg\_levelsum} would be
+  our best choice because it took far less goal tests than the previous two heuristics.\\
+
+  As for the non-heuristic search planning methods, I think they will generally perform poorly compared to \(A^*\) with proper heuristics. The reason is that without a heuristic, the program would waste a lot of time search through
+  irrelevant states. However, since it can be totally random for non-heuristic search planning methods to choose its node expansion, it is possible that in certain case (with very small possibility), they will over-perform \(A^*\) algorithm. 
+\end{document}
