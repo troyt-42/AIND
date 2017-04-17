@@ -76,8 +76,22 @@ class SelectorBIC(ModelSelector):
         """
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on BIC scores
-        raise NotImplementedError
+        # implement model selection based on BIC scores
+        X, lengths = self.hwords[self.this_word]
+        max_score = 0
+        best_num_components = self.min_n_components
+
+        for i in range(self.min_n_components, self.max_n_components):
+            try:
+                model = GaussianHMM(n_components=i, n_iter=1000).fit(X)
+                logL = model.score(X)
+                bic_score = -2 * logL + i * math.log(len(X))
+                if bic_score > max_score or max_score == 0:
+                    max_score = bic_score
+                    best_num_components = i
+            except:
+                pass
+        return self.base_model(best_num_components)
 
 
 class SelectorDIC(ModelSelector):
@@ -92,17 +106,61 @@ class SelectorDIC(ModelSelector):
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        # implement model selection based on DIC scores
+        X, lengths = self.hwords[self.this_word]
+        max_score = 0
+        best_num_components = self.min_n_components
+        models = []
+        scores = []
+        M = self.max_n_components - self.min_n_components
 
+        for i in range(self.min_n_components, self.max_n_components):
+            try:
+                model = GaussianHMM(n_components=i, n_iter=1000).fit(X)
+                scores.append(model.score(X))
+                models.append(model)
+            except:
+                # It seems that the the model would raise error when the n_components
+                # reach certain percent of the training data points. i.e. it raised
+                # error for n_components>5 for 'TOY' and n_components>31 for 'FUTURE'
+                pass
+        for idx, model in enumerate(models):
+            score_sum = 0
+            for idxs, score in enumerate(scores):
+                if (idx != idxs):
+                    score_sum += score
+            dic_score = scores[idx] - 1/(M-1) * score_sum
+            if (dic_score > max_score or max_score == 0):
+                max_score = dic_score
+                best_num_components = idx + self.min_n_components
+        return self.base_model(best_num_components)
 
 class SelectorCV(ModelSelector):
     ''' select best model based on average log Likelihood of cross-validation folds
 
     '''
-
+    from sklearn.model_selection import KFold
     def select(self):
+        # implement model selection using CV
         warnings.filterwarnings("ignore", category=DeprecationWarning)
+        X, lengths = self.hwords[self.this_word]
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        split_method = KFold()
+
+        for cv_train_idx, cv_test_idx in split_method.split(X):
+            X_train, X_test = X[cv_train_idx], X[cv_test_idx]
+            lengths_train, lengths_test = [len(cv_train_idx)], [len(cv_test_idx)]
+
+        max_score = 0
+        best_num_components = self.min_n_components
+        for i in range(self.min_n_components, self.max_n_components):
+            try:
+                model = GaussianHMM(n_components=i, n_iter=1000).fit(X_train, lengths_train)
+                logL = model.score(X_test, lengths_test)
+                if logL > max_score or max_score == 0:
+                    max_score = logL
+                    best_num_components = i
+            except:
+                pass
+
+        return self.base_model(best_num_components)
