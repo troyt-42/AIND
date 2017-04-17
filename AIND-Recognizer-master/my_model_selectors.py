@@ -85,11 +85,12 @@ class SelectorBIC(ModelSelector):
             try:
                 model = GaussianHMM(n_components=i, n_iter=1000).fit(X)
                 logL = model.score(X)
-                bic_score = -2 * logL + i * math.log(len(X))
+                p = i ** 2 + 2 * i * len(X) - 1
+                bic_score = -2 * logL + p * math.log(len(X))
                 if bic_score > max_score or max_score == 0:
                     max_score = bic_score
                     best_num_components = i
-            except:
+            except ValueError:
                 pass
         return self.base_model(best_num_components)
 
@@ -110,29 +111,33 @@ class SelectorDIC(ModelSelector):
         X, lengths = self.hwords[self.this_word]
         max_score = 0
         best_num_components = self.min_n_components
-        models = []
-        scores = []
+
+        scores = {}
+        antiRes = {}
         M = self.max_n_components - self.min_n_components
 
         for i in range(self.min_n_components, self.max_n_components):
+            antiLogL = 0.0
+            wc = 0
+            
             try:
                 model = GaussianHMM(n_components=i, n_iter=1000).fit(X)
-                scores.append(model.score(X))
-                models.append(model)
-            except:
-                # It seems that the the model would raise error when the n_components
-                # reach certain percent of the training data points. i.e. it raised
-                # error for n_components>5 for 'TOY' and n_components>31 for 'FUTURE'
+                for word in self.hwords:
+                    if word == self.this_word:
+                        continue
+                    X, lengths = self.hwords[word]
+                    antiLogL += model.score(X, lengths)
+                    wc += 1
+                scores[i] = model.score(X)
+                antiLogL /= float(wc)
+                antiRes[i] = antiLogL
+            except ValueError:
                 pass
-        for idx, model in enumerate(models):
-            score_sum = 0
-            for idxs, score in enumerate(scores):
-                if (idx != idxs):
-                    score_sum += score
-            dic_score = scores[idx] - 1/(M-1) * score_sum
+        for idx in scores:
+            dic_score = scores[idx] - antiRes[idx]
             if (dic_score > max_score or max_score == 0):
                 max_score = dic_score
-                best_num_components = idx + self.min_n_components
+                best_num_components = idx
         return self.base_model(best_num_components)
 
 class SelectorCV(ModelSelector):
@@ -160,7 +165,7 @@ class SelectorCV(ModelSelector):
                 if logL > max_score or max_score == 0:
                     max_score = logL
                     best_num_components = i
-            except:
+            except ValueError:
                 pass
 
         return self.base_model(best_num_components)
